@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Column Names from Excel</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Upload an Excel file</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="customFile" name="file">
+                <label class="custom-file-label" for="customFile">Choose file</label>
+            </div>
+            <br>
+            <input type="submit" value="Upload" class="btn btn-primary mt-3">
+        </form>
+
+        {% if uploaded_file %}
+            <h2>Uploaded File: {{ uploaded_file }}</h2>
+
+            <h2>Top 4 Rows:</h2>
+            <div class="table-responsive">
+                {{ top_rows | safe }}
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h2>Filter 1:</h2>
+                    <form id="filter-form">
+                        <select class="form-control" name="filter_column" id="filter-column">
+                            {% for column in column_names %}
+                                <option>{{ column }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="button" value="Generate Pie Chart" class="btn btn-primary mt-3" onclick="generatePieChart()">
+                    </form>
+                    <div id="pie-chart-container" class="mt-4">
+                        <!-- Placeholder for the pie chart -->
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h2>Filter 2:</h2>
+                    <form id="filter-form-2">
+                        <select class="form-control" name="filter_column_2" id="filter-column-2">
+                            {% for column in column_names %}
+                                <option>{{ column }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="button" value="Generate Bar Chart" class="btn btn-primary mt-3" onclick="generateBarChart()">
+                    </form>
+                    <div id="bar-chart-container" class="mt-4">
+                        <!-- Placeholder for the bar chart -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h2>Filter 3:</h2>
+                    <form id="filter-form-3">
+                        {% for value in filter_3_values %}
+                            <label class="form-check-label">
+                                <input type="checkbox" class="form-check-input" name="filter3[]" value="{{ value }}">
+                                {{ value }}
+                            </label>
+                            <br>
+                        {% endfor %}
+                        <input type="button" value="Generate Pie Chart" class="btn btn-primary mt-3" onclick="generatePieChartFilter3()">
+                    </form>
+                    <div id="pie-chart-container-filter3" class="mt-4">
+                        <!-- Placeholder for the pie chart -->
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h2>Filter 4:</h2>
+                    <form id="filter-form-4">
+                        {% for value in filter_4_values %}
+                            <label class="form-check-label">
+                                <input type="checkbox" class="form-check-input" name="filter4[]" value="{{ value }}">
+                                {{ value }}
+                            </label>
+                            <br>
+                        {% endfor %}
+                        <input type="button" value="Generate Bar Chart" class="btn btn-primary mt-3" onclick="generateBarChartFilter4()">
+                    </form>
+                    <div id="bar-chart-container-filter4" class="mt-4">
+                        <!-- Placeholder for the bar chart -->
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $("#filter-form").submit(function (event) {
+                event.preventDefault();
+                generatePieChart();
+            });
+
+            $("#filter-form-2").submit(function (event) {
+                event.preventDefault();
+                generateBarChart();
+            });
+        });
+
+        function generatePieChart() {
+            const selectedColumn = $("#filter-column").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/pie_chart",
+                data: { filter_column: selectedColumn },
+                success: function (data) {
+                    // Parse the JSON data and create the pie chart
+                    const chartData = JSON.parse(data);
+                    Plotly.newPlot("pie-chart-container", chartData.data, chartData.layout);
+                },
+            });
+        }
+
+        function generateBarChart() {
+            const selectedColumn = $("#filter-column-2").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/bar_chart",
+                data: { filter_column: selectedColumn },
+                success: function (data) {
+                    // Parse the JSON data and create the bar chart
+                    const chartData = JSON.parse(data);
+                    Plotly.newPlot("bar-chart-container", chartData.data, chartData.layout);
+                },
+            });
+        }
+
+        function generatePieChartFilter3() {
+            const selectedValues = [];
+            $("input[name='filter3[]']:checked").each(function () {
+                selectedValues.push($(this).val());
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "/pie_chart_filter3",
+                data: { filter3: selectedValues },
+                success: function (data) {
+                    // Parse the JSON data and create the pie chart
+                    const chartData = JSON.parse(data);
+                    Plotly.newPlot("pie-chart-container-filter3", chartData.data, chartData.layout);
+                },
+            });
+        }
+
+        function generateBarChartFilter4() {
+            const selectedValues = [];
+            $("input[name='filter4[]']:checked").each(function () {
+                selectedValues.push($(this).val());
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "/bar_chart_filter4",
+                data: { filter4: selectedValues },
+                success: function (data) {
+                    // Parse the JSON data and create the bar chart
+                    const chartData = JSON.parse(data);
+                    Plotly.newPlot("bar-chart-container-filter4", chartData.data, chartData.layout);
+                },
+            });
+        }
+    </script>
+</body>
+</html>
